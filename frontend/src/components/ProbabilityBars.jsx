@@ -1,7 +1,3 @@
-/**
- * Top-5 candidate tokens for a given generation step, drawn as horizontal bars.
- * Bar width = probability. The chosen token is highlighted.
- */
 export default function ProbabilityBars({ step }) {
   if (!step) return null;
   const candidates = step.top_candidates || [];

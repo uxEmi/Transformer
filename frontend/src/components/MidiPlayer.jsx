@@ -2,13 +2,6 @@ import { useEffect, useRef, useState } from "react";
 import * as Tone from "tone";
 import { Midi } from "@tonejs/midi";
 
-/**
- * Decode base64 MIDI from the backend, parse with @tonejs/midi,
- * and play with Tone.js synths.
- *
- * Color-coding (seed vs generated) is shown in TokenStream, not here.
- * This component just handles audio playback.
- */
 export default function MidiPlayer({ midiBase64, seedTokenCount }) {
   const [playing, setPlaying] = useState(false);
   const [duration, setDuration] = useState(0);
@@ -16,9 +9,7 @@ export default function MidiPlayer({ midiBase64, seedTokenCount }) {
   const partsRef = useRef([]);
 
   useEffect(() => {
-    // Cleanup on unmount or new midi
     return () => stopAndCleanup();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [midiBase64]);
 
   function stopAndCleanup() {
@@ -43,7 +34,6 @@ export default function MidiPlayer({ midiBase64, seedTokenCount }) {
     await Tone.start();
     stopAndCleanup();
 
-    // Decode base64 -> Uint8Array
     const binary = atob(midiBase64);
     const bytes = new Uint8Array(binary.length);
     for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
@@ -71,7 +61,6 @@ export default function MidiPlayer({ midiBase64, seedTokenCount }) {
     Tone.Transport.start();
     setPlaying(true);
 
-    // Auto-stop at end
     Tone.Transport.scheduleOnce(() => {
       stopAndCleanup();
     }, midi.duration + 0.5);

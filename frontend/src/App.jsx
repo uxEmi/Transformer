@@ -1,56 +1,34 @@
-import { useEffect, useState } from "react";
-import { fetchSeeds, generate, fetchBpePatterns } from "./api";
+import { useState } from "react";
+import { generate } from "./api";
 
-import SeedSelector from "./components/SeedSelector";
 import ControlPanel from "./components/ControlPanel";
 import MidiPlayer from "./components/MidiPlayer";
 import TokenStream from "./components/TokenStream";
 import ProbabilityBars from "./components/ProbabilityBars";
 import AttentionHeatmap from "./components/AttentionHeatmap";
-import BpeMergesPanel from "./components/BpeMergesPanel";
 
 export default function App() {
-  // Seeds list
-  const [seeds, setSeeds] = useState([]);
-  const [selectedSeed, setSelectedSeed] = useState("");
+  const [midiFile, setMidiFile] = useState(null);
 
-  // Generation parameters
   const [temperature, setTemperature] = useState(0.8);
   const [sampling, setSampling] = useState("top_p");
   const [topK, setTopK] = useState(40);
   const [topP, setTopP] = useState(0.9);
 
-  // Generation result + UI state
   const [result, setResult] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [currentStep, setCurrentStep] = useState(0);
 
-  // BPE patterns (from week-1 work)
-  const [bpePatterns, setBpePatterns] = useState([]);
-
-  // Load seeds + BPE patterns on mount
-  useEffect(() => {
-    fetchSeeds()
-      .then((s) => {
-        setSeeds(s);
-        if (s.length > 0) setSelectedSeed(s[0].id);
-      })
-      .catch((e) => setError("Failed to load seeds: " + e.message));
-    fetchBpePatterns()
-      .then(setBpePatterns)
-      .catch(() => {}); // non-critical
-  }, []);
-
   async function handleGenerate() {
-    if (!selectedSeed) return;
+    if (!midiFile) return;
     setLoading(true);
     setError(null);
     setResult(null);
     setCurrentStep(0);
     try {
       const data = await generate({
-        seedId: selectedSeed,
+        file: midiFile,
         temperature,
         sampling,
         topK,
@@ -74,11 +52,14 @@ export default function App() {
       </header>
 
       <section className="controls">
-        <SeedSelector
-          seeds={seeds}
-          selected={selectedSeed}
-          onChange={setSelectedSeed}
-        />
+        <label>
+          MIDI file
+          <input
+            type="file"
+            accept=".mid,.midi"
+            onChange={(e) => setMidiFile(e.target.files?.[0] ?? null)}
+          />
+        </label>
         <ControlPanel
           temperature={temperature}
           setTemperature={setTemperature}
@@ -92,7 +73,7 @@ export default function App() {
         <button
           className="generate-btn"
           onClick={handleGenerate}
-          disabled={loading || !selectedSeed}
+          disabled={loading || !midiFile}
         >
           {loading ? "Generating..." : "Generate"}
         </button>
@@ -103,10 +84,10 @@ export default function App() {
         <section className="results">
           <MidiPlayer
             midiBase64={result.midi_base64}
-            seedTokenCount={result.seed_tokens.length}
+            seedTokenCount={result.input_tokens.length}
           />
           <TokenStream
-            seedTokens={result.seed_tokens}
+            seedTokens={result.input_tokens}
             generatedTokens={result.generated_tokens}
             currentStep={currentStep}
             onStepChange={setCurrentStep}
@@ -117,15 +98,11 @@ export default function App() {
             />
             <AttentionHeatmap
               step={result.steps[currentStep]}
-              allTokens={[...result.seed_tokens, ...result.generated_tokens.slice(0, currentStep + 1)]}
+              allTokens={[...result.input_tokens, ...result.generated_tokens.slice(0, currentStep + 1)]}
             />
           </div>
         </section>
       )}
-
-      <aside className="bpe-section">
-        <BpeMergesPanel patterns={bpePatterns} />
-      </aside>
     </div>
   );
 }

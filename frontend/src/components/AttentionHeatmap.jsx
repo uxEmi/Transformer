@@ -1,10 +1,3 @@
-/**
- * Renders the attention weights for the current generation step.
- * The backend sends a single row: which earlier tokens the model was
- * attending to when it picked this step's token.
- *
- * Drawn as a row of colored cells (darker = higher attention).
- */
 export default function AttentionHeatmap({ step, allTokens }) {
   if (!step) return null;
   const attentionRow = (step.attention && step.attention[0]) || [];

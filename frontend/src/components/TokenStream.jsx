@@ -1,8 +1,3 @@
-/**
- * Renders all tokens as colored chips: seed (blue) and generated (orange).
- * Clicking a generated token sets the "current step" so other visualizations
- * (probability bars, attention heatmap) update for that step.
- */
 export default function TokenStream({
   seedTokens,
   generatedTokens,
@@ -37,7 +32,6 @@ export default function TokenStream({
 }
 
 function displayToken(t) {
-  // Make whitespace visible
   const s = (t ?? "").replace(/\n/g, "↵").replace(/ /g, "·");
   return s || "∅";
 }

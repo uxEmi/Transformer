@@ -1,51 +1,19 @@
-"""
-FastAPI entry point. Defines:
-  - Pydantic schemas (the API contract, in code)
-  - CORS for the React dev server
-  - Three routes: GET /seeds, POST /generate, GET /bpe-patterns
-
-The actual model work lives in inference.py. This file is thin on purpose.
-"""
-
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, File, Form, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 from typing import List, Literal
 
-from seeds import SEEDS, get_seed_by_id
-from inference import generate_continuation, get_bpe_patterns
+from inference import generate_continuation
 
 app = FastAPI(title="Melody Continuer API")
 
-# CORS for the React dev server. Add deployment URLs here later if needed.
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173", "http://localhost:3000"],
+    allow_origin_regex=r"^http://(localhost|127\.0\.0\.1)(:\d+)?$",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-
-# ---------- Schemas (the API contract) ----------
-
-class SeedInfo(BaseModel):
-    id: str
-    name: str
-    preview: str  # short human-readable preview of the melody
-
-
-class SeedsResponse(BaseModel):
-    seeds: List[SeedInfo]
-
-
-class GenerateRequest(BaseModel):
-    seed_id: str
-    temperature: float = Field(0.8, ge=0.1, le=2.0)
-    max_new_tokens: int = Field(50, ge=1, le=200)
-    sampling: Literal["greedy", "top_k", "top_p"] = "top_p"
-    top_k: int = Field(40, ge=1, le=200)
-    top_p: float = Field(0.9, ge=0.1, le=1.0)
 
 
 class TokenCandidate(BaseModel):
@@ -57,53 +25,74 @@ class GenerationStep(BaseModel):
     step: int
     chosen_token: str
     top_candidates: List[TokenCandidate]
-    attention: List[List[float]]  # 2D matrix per step (kept small)
+    attention: List[List[float]]
 
 
 class GenerateResponse(BaseModel):
     midi_base64: str
-    seed_tokens: List[str]
+    input_tokens: List[str]
     generated_tokens: List[str]
     steps: List[GenerationStep]
 
 
-class BpePattern(BaseModel):
-    token: str
-    description: str
-    frequency: int
-
-
-class BpePatternsResponse(BaseModel):
-    patterns: List[BpePattern]
-
-
-# ---------- Routes ----------
-
-@app.get("/seeds", response_model=SeedsResponse)
-def list_seeds():
-    return SeedsResponse(seeds=[SeedInfo(**s) for s in SEEDS])
+MAX_UPLOAD_BYTES = 1 * 1024 * 1024
+ALLOWED_MIDI_MIMES = {
+    "audio/midi",
+    "audio/x-midi",
+    "application/x-midi",
+    "application/octet-stream",
+}
 
 
 @app.post("/generate", response_model=GenerateResponse)
-def generate(req: GenerateRequest):
-    seed = get_seed_by_id(req.seed_id)
-    if seed is None:
-        raise HTTPException(status_code=404, detail=f"Unknown seed_id: {req.seed_id}")
+async def generate(
+    file: UploadFile = File(...),
+    temperature: float = Form(0.8),
+    max_new_tokens: int = Form(50),
+    sampling: Literal["greedy", "top_k", "top_p"] = Form("top_p"),
+    top_k: int = Form(40),
+    top_p: float = Form(0.9),
+):
+    name = (file.filename or "").lower()
+    mime = (file.content_type or "").lower()
+    ext_ok = name.endswith(".mid") or name.endswith(".midi")
+    if mime not in ALLOWED_MIDI_MIMES and not ext_ok:
+        raise HTTPException(
+            status_code=415,
+            detail=f"Unsupported file type: {mime!r} / {name!r}. Upload a .mid or .midi file.",
+        )
 
-    result = generate_continuation(
-        seed_abc=seed["abc"],
-        temperature=req.temperature,
-        max_new_tokens=req.max_new_tokens,
-        sampling=req.sampling,
-        top_k=req.top_k,
-        top_p=req.top_p,
-    )
+    contents = await file.read()
+    if len(contents) == 0:
+        raise HTTPException(status_code=400, detail="Empty file.")
+    if len(contents) > MAX_UPLOAD_BYTES:
+        raise HTTPException(
+            status_code=413,
+            detail=f"File too large ({len(contents)} bytes). Max is {MAX_UPLOAD_BYTES}.",
+        )
+
+    if not (0.1 <= temperature <= 2.0):
+        raise HTTPException(status_code=422, detail="temperature must be in [0.1, 2.0]")
+    if not (1 <= max_new_tokens <= 200):
+        raise HTTPException(status_code=422, detail="max_new_tokens must be in [1, 200]")
+    if not (1 <= top_k <= 200):
+        raise HTTPException(status_code=422, detail="top_k must be in [1, 200]")
+    if not (0.1 <= top_p <= 1.0):
+        raise HTTPException(status_code=422, detail="top_p must be in [0.1, 1.0]")
+
+    try:
+        result = generate_continuation(
+            midi_bytes=contents,
+            temperature=temperature,
+            max_new_tokens=max_new_tokens,
+            sampling=sampling,
+            top_k=top_k,
+            top_p=top_p,
+        )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Generation failed: {e}")
+
     return GenerateResponse(**result)
-
-
-@app.get("/bpe-patterns", response_model=BpePatternsResponse)
-def bpe_patterns():
-    return BpePatternsResponse(patterns=get_bpe_patterns())
 
 
 @app.get("/")
