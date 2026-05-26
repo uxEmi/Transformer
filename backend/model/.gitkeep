@@ -1,0 +1,2 @@
+# Pretrained model weights go here.
+# Gitignored — download with `huggingface-cli` or let `from_pretrained` cache automatically.
