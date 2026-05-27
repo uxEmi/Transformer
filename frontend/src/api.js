@@ -16,7 +16,7 @@ export async function generate({
   const form = new FormData();
   form.append("file", file);
   form.append("temperature", String(temperature));
-  form.append("max_new_tokens", String(maxNewTokens));
+  form.append("max_new_tokens", String(maxNewTokens ?? 50));
   form.append("sampling", sampling);
   form.append("top_k", String(topK));
   form.append("top_p", String(topP));

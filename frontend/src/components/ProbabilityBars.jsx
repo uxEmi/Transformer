@@ -5,35 +5,35 @@ export default function ProbabilityBars({ step }) {
 
   return (
     <div>
-      <h3 style={{ margin: "0 0 0.5rem" }}>Top 5 candidates (step {step.step})</h3>
-      <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+      <h3>Top 5 candidates &mdash; step {step.step}</h3>
+      <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
         {candidates.map((c, i) => {
           const isChosen = c.token === step.chosen_token;
           const widthPct = (c.prob / maxProb) * 100;
           return (
-            <div key={i} style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <div key={i} style={{ display: "flex", alignItems: "center", gap: 10 }}>
               <span
                 style={{
-                  fontFamily: "SF Mono, monospace",
-                  fontSize: "0.8rem",
-                  minWidth: 80,
-                  color: isChosen ? "var(--accent-2)" : "var(--text)",
+                  fontFamily: "var(--mono)",
+                  fontSize: "0.78rem",
+                  minWidth: 90,
+                  color: isChosen ? "var(--oxblood)" : "var(--ink-soft)",
+                  fontWeight: isChosen ? 600 : 400,
                 }}
               >
                 {displayToken(c.token)}
               </span>
-              <div style={{ flex: 1, background: "rgba(255,255,255,0.05)", borderRadius: 4, height: 18 }}>
+              <div style={{ flex: 1, background: "var(--paper-deep)", height: 14, border: "1px solid var(--rule)" }}>
                 <div
                   style={{
                     width: `${widthPct}%`,
                     height: "100%",
-                    background: isChosen ? "var(--accent-2)" : "var(--accent)",
-                    borderRadius: 4,
-                    transition: "width 0.2s",
+                    background: isChosen ? "var(--oxblood)" : "var(--mustard)",
+                    transition: "width 0.25s",
                   }}
                 />
               </div>
-              <span style={{ fontSize: "0.8rem", color: "var(--muted)", minWidth: 60 }}>
+              <span style={{ fontFamily: "var(--serif)", fontStyle: "italic", fontSize: "0.95rem", color: isChosen ? "var(--oxblood)" : "var(--ink-soft)", minWidth: 60, textAlign: "right" }}>
                 {(c.prob * 100).toFixed(1)}%
               </span>
             </div>
@@ -45,5 +45,5 @@ export default function ProbabilityBars({ step }) {
 }
 
 function displayToken(t) {
-  return (t ?? "").replace(/\n/g, "↵").replace(/ /g, "·") || "∅";
+  return (t ?? "").replace(/\n/g, "\u21B5").replace(/ /g, "\u00B7") || "\u2205";
 }

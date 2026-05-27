@@ -5,28 +5,29 @@ export default function AttentionHeatmap({ step, allTokens }) {
 
   return (
     <div>
-      <h3 style={{ margin: "0 0 0.5rem" }}>Attention (step {step.step})</h3>
-      <p style={{ color: "var(--muted)", fontSize: "0.85rem", marginTop: 0 }}>
+      <h3>Attention &mdash; step {step.step}</h3>
+      <p style={{ color: "var(--ink-soft)", fontSize: "0.9rem", fontFamily: "var(--serif)", fontStyle: "italic", marginTop: 0 }}>
         Which earlier tokens did the model attend to when picking this one?
       </p>
       <div style={{ display: "flex", flexWrap: "wrap", gap: 2 }}>
         {attentionRow.map((weight, i) => {
           const intensity = weight / maxAttn;
-          const bg = `rgba(99, 102, 241, ${intensity.toFixed(3)})`;
+          const bg = `rgba(122, 31, 43, ${intensity.toFixed(3)})`;
           const tokenLabel = allTokens[i] ?? "?";
+          const fg = intensity > 0.55 ? "var(--paper)" : "var(--ink)";
           return (
             <div
               key={i}
               title={`${tokenLabel}: ${weight.toFixed(4)}`}
               style={{
                 background: bg,
-                border: "1px solid rgba(255,255,255,0.08)",
+                border: "1px solid var(--rule)",
                 padding: "4px 6px",
-                fontSize: "0.7rem",
-                fontFamily: "SF Mono, monospace",
-                borderRadius: 3,
+                fontSize: "0.72rem",
+                fontFamily: "var(--mono)",
                 minWidth: 22,
                 textAlign: "center",
+                color: fg,
               }}
             >
               {displayToken(tokenLabel)}
@@ -39,5 +40,5 @@ export default function AttentionHeatmap({ step, allTokens }) {
 }
 
 function displayToken(t) {
-  return (t ?? "").replace(/\n/g, "↵").replace(/ /g, "·") || "∅";
+  return (t ?? "").replace(/\n/g, "\u21B5").replace(/ /g, "\u00B7") || "\u2205";
 }
