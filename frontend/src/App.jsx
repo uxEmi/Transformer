@@ -12,7 +12,7 @@ import VoiceInput from "./components/VoiceInput";
 import ClassicsPicker from "./components/ClassicsPicker";
 
 const TABS = [
-  { id: "text", label: "Write" },
+  // { id: "text", label: "Write" },   // hidden — mood/lyrics feature kept in code (TextInput.jsx, moodMap.js)
   { id: "voice", label: "Hum" },
   { id: "classics", label: "Classics" },
   { id: "upload", label: "Upload" },
@@ -29,7 +29,7 @@ function SectionHead({ num, title }) {
 }
 
 export default function App() {
-  const [tab, setTab] = useState("text");
+  const [tab, setTab] = useState("upload");
 
   const [textEvents, setTextEvents] = useState([]);
   const [textBpm, setTextBpm] = useState(120);

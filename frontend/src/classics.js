@@ -1,15 +1,4 @@
-// ---------------------------------------------------------------------------
-// Famous-melody library
-// ---------------------------------------------------------------------------
-// Hand-encoded short excerpts of well-known PUBLIC-DOMAIN melodies. Each is
-// just enough of the tune to be recognizable as a seed for the transformer
-// to continue. Encoded directly as note events that the existing
-// melodyToMidiFile() can turn into a real .mid File on the fly.
-//
-// Pitch reference: middle C = 60, then chromatic.  C4=60 D4=62 E4=64 F4=65
-// G4=67 A4=69 B4=71 C5=72 D5=74 E5=76 ...   F#=66 G#=68 etc.
-//
-// durationQL is in quarter notes: 1.0 = quarter, 0.5 = eighth, 2.0 = half.
+
 
 const ev = (midi, durationQL) => ({ midi, durationQL, isRest: false });
 const rest = (durationQL) => ({ midi: null, durationQL, isRest: true });
