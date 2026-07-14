@@ -48,6 +48,4 @@ seed melody
 Our BPE (week 1) runs as a parallel analysis layer on the output, showing learned musical
 patterns. Our embedding work (week 2) informs style conditioning.
 
-## Who works where
-- **Person A:** backend/ (model, inference, BPE wrapper, FastAPI routes)
-- **Person B:** frontend/ (React components, visualizations, audio playback)
+by Mihai and Ayla
